@@ -1,49 +1,49 @@
 # PythonOLAPClient
 
-Python notebook permettant de se connecter à une instance **Power BI Desktop** via ADOMD.NET, d'extraire les métadonnées du modèle tabulaire sémantique et de générer automatiquement un **contrat de données [ODCS v3.1.0](https://github.com/bitol-io/open-data-contract-standard)**.
+A Python notebook that connects to a running **Power BI Desktop** instance via ADOMD.NET, extracts tabular semantic model metadata, and automatically generates an **[ODCS v3.1.0](https://github.com/bitol-io/open-data-contract-standard) data contract**.
 
 ---
 
-## Table des matières
+## Table of Contents
 
-1. [Prérequis](#prérequis)
-2. [Installation des dépendances](#installation-des-dépendances)
+1. [Prerequisites](#prerequisites)
+2. [Dependency Installation](#dependency-installation)
 3. [Configuration](#configuration)
-4. [Utilisation](#utilisation)
-5. [Métadonnées extraites](#métadonnées-extraites)
-6. [Génération du contrat ODCS](#génération-du-contrat-odcs)
-7. [Structure du projet](#structure-du-projet)
+4. [Usage](#usage)
+5. [Extracted Metadata](#extracted-metadata)
+6. [ODCS Contract Generation](#odcs-contract-generation)
+7. [Project Structure](#project-structure)
 
 ---
 
-## Prérequis
+## Prerequisites
 
-| Composant | Version | Notes |
+| Component | Version | Notes |
 |---|---|---|
 | Python | ≥ 3.10 | |
-| [.NET](https://dotnet.microsoft.com/en-us/download/dotnet) | 10 | Extraire dans `%LOCALAPPDATA%\Microsoft\dotnet` |
-| `pythonnet` | dernière | Chargement du runtime CoreCLR |
-| `pyadomd` | dernière | Pilote ADOMD.NET pour Python |
-| `pandas` | dernière | Manipulation des données |
-| `pyyaml` | dernière | Sérialisation YAML |
-| `open-data-contract-standard` | | Modèle ODCS |
-| `datacontract-cli` | | Helpers ODCS (`odcs_helper`) |
+| [.NET](https://dotnet.microsoft.com/en-us/download/dotnet) | 10 | Extract to `%LOCALAPPDATA%\Microsoft\dotnet` |
+| `pythonnet` | latest | Loads the CoreCLR runtime |
+| `pyadomd` | latest | ADOMD.NET driver for Python |
+| `pandas` | latest | Data manipulation |
+| `pyyaml` | latest | YAML serialisation |
+| `open-data-contract-standard` | | ODCS model |
+| `datacontract-cli` | | ODCS helpers (`odcs_helper`) |
 
-### Variable d'environnement
+### Environment variable
 
 ```powershell
 $Env:DOTNET_ROOT = "$Env:LOCALAPPDATA\Microsoft\dotnet"
 ```
 
-### Trouver le port Power BI Desktop
+### Finding the Power BI Desktop port
 
-Ouvrir le **Gestionnaire des tâches → Détails → AnalysisServices.exe → Moniteur de ressources (TCP)** pour identifier le port d'écoute.
+Open **Task Manager → Details → AnalysisServices.exe → Resource Monitor (TCP)** to identify the listening port.
 
 ---
 
-## Installation des dépendances
+## Dependency Installation
 
-Le notebook contient deux cellules d'initialisation qui téléchargent automatiquement les DLL .NET depuis NuGet.
+The notebook includes two initialisation cells that automatically download the required .NET DLLs from NuGet.
 
 ### 1 — ADOMD.NET Client
 
@@ -52,9 +52,9 @@ PACKAGE_NAME = "Microsoft.AnalysisServices.AdomdClient"
 VERSION      = "19.113.2"
 ```
 
-Télécharge et extrait toutes les DLL `lib/` dans le répertoire courant.
+Downloads and extracts all `lib/` DLLs into the current directory.
 
-### 2 — Bibliothèques d'identité (MSAL)
+### 2 — Identity Libraries (MSAL)
 
 ```python
 LIBRARIES = {
@@ -63,20 +63,20 @@ LIBRARIES = {
 }
 ```
 
-Priorité accordée aux cibles `netstandard2.0` puis `net6.0` pour la compatibilité cross-platform.
+Targets `netstandard2.0` first, then `net6.0`, for cross-platform compatibility.
 
 ---
 
 ## Configuration
 
-Modifier les deux paramètres dans **Cell 6** avant d'exécuter le notebook :
+Edit the two parameters in **Cell 6** before running the notebook:
 
 ```python
-PBIDESKTOP_PORT = "62945"                              # port AnalysisServices.exe
-CATALOG_ID      = "66e82ceb-1243-40ef-8b61-fabfa58934ab"  # GUID du dataset ouvert
+PBIDESKTOP_PORT = "62945"                               # AnalysisServices.exe port
+CATALOG_ID      = "66e82ceb-1243-40ef-8b61-fabfa58934ab"  # GUID of the open dataset
 ```
 
-La chaîne de connexion résultante est :
+The resulting connection string is:
 
 ```
 Provider=MSOLAP;Data Source=localhost:<PORT>;Initial Catalog=<CATALOG_ID>;
@@ -84,41 +84,41 @@ Provider=MSOLAP;Data Source=localhost:<PORT>;Initial Catalog=<CATALOG_ID>;
 
 ---
 
-## Utilisation
+## Usage
 
-Exécuter les cellules dans l'ordre :
+Run the cells in order:
 
-| # | Cellule | Action |
-|---|---------|--------|
-| 0 | Téléchargement ADOMD.NET | Télécharge `Microsoft.AnalysisServices.AdomdClient.dll` |
-| 1 | Téléchargement MSAL | Télécharge `Microsoft.Identity.Client.dll` et `Microsoft.IdentityModel.Abstractions.dll` |
-| 2 | Note d'installation .NET | Instructions d'installation du runtime .NET |
-| 4 | Test de connexion | Connexion rapide et requête DMV `$SYSTEM.TMSCHEMA_COLUMNS` |
-| 6 | Paramètres | Définit `PBIDESKTOP_PORT` et `CATALOG_ID` |
-| 7 | Imports & helper | Charge `pyadomd`, `pandas`, `yaml` ; définit `run_dmv()` |
-| 8 | Extraction | Extrait tables, colonnes, mesures, relations, hiérarchies |
-| 9 | Aperçu | Affiche les DataFrames extraits |
-| 10 | Mapping de types | Mappe les types tabulaires vers ODCS `logicalType` / `physicalType` |
-| 11 | Générateur ODCS | Définit `generate_odcs_contract()` |
-| 12 | Génération | Crée le contrat ODCS et affiche un aperçu YAML |
-| 13 | Export | Exporte le contrat dans `<nom_catalog>.odcs.yaml` |
+| # | Cell | Action |
+|---|------|--------|
+| 0 | ADOMD.NET download | Downloads `Microsoft.AnalysisServices.AdomdClient.dll` |
+| 1 | MSAL download | Downloads `Microsoft.Identity.Client.dll` and `Microsoft.IdentityModel.Abstractions.dll` |
+| 2 | .NET install note | Instructions for installing the .NET runtime |
+| 4 | Connection test | Quick connection and DMV query `$SYSTEM.TMSCHEMA_COLUMNS` |
+| 6 | Parameters | Sets `PBIDESKTOP_PORT` and `CATALOG_ID` |
+| 7 | Imports & helper | Loads `pyadomd`, `pandas`, `yaml`; defines `run_dmv()` |
+| 8 | Extraction | Extracts tables, columns, measures, relationships, hierarchies |
+| 9 | Preview | Displays the extracted DataFrames |
+| 10 | Type mapping | Maps tabular types to ODCS `logicalType` / `physicalType` |
+| 11 | ODCS generator | Defines `generate_odcs_contract()` |
+| 12 | Generation | Creates the ODCS contract and shows a YAML preview |
+| 13 | Export | Writes the contract to `<catalog_name>.odcs.yaml` |
 
 ---
 
-## Métadonnées extraites
+## Extracted Metadata
 
-Chaque extraction utilise des requêtes **DMV (Dynamic Management Views)** Analysis Services :
+Each extraction uses **DMV (Dynamic Management Views)** queries against the Analysis Services engine:
 
-| Objet | DMV | Description |
+| Object | DMV | Description |
 |---|---|---|
-| Informations modèle | `$SYSTEM.DBSCHEMA_CATALOGS` | Nom, description, niveau de compatibilité |
-| Tables | `$SYSTEM.TMSCHEMA_TABLES` | Tables non privées (ID, nom, description, visibilité) |
-| Colonnes | `$SYSTEM.TMSCHEMA_COLUMNS` | Colonnes de données et calculées (type, DataType, expression DAX) |
-| Mesures | `$SYSTEM.TMSCHEMA_MEASURES` | Mesures avec leurs expressions DAX |
-| Relations | `$SYSTEM.TMSCHEMA_RELATIONSHIPS` | Cardinalité, filtres croisés, statut actif |
-| Hiérarchies | `$SYSTEM.TMSCHEMA_HIERARCHIES` | Hiérarchies utilisateur |
+| Model info | `$SYSTEM.DBSCHEMA_CATALOGS` | Name, description, compatibility level |
+| Tables | `$SYSTEM.TMSCHEMA_TABLES` | Non-private tables (ID, name, description, visibility) |
+| Columns | `$SYSTEM.TMSCHEMA_COLUMNS` | Data and calculated columns (type, DataType, DAX expression) |
+| Measures | `$SYSTEM.TMSCHEMA_MEASURES` | Measures with their DAX expressions |
+| Relationships | `$SYSTEM.TMSCHEMA_RELATIONSHIPS` | Cardinality, cross-filter behavior, active status |
+| Hierarchies | `$SYSTEM.TMSCHEMA_HIERARCHIES` | User-defined hierarchies |
 
-### Types de colonnes (`ColumnType`)
+### Column types (`ColumnType`)
 
 | Code | Type |
 |------|------|
@@ -128,15 +128,15 @@ Chaque extraction utilise des requêtes **DMV (Dynamic Management Views)** Analy
 
 ---
 
-## Génération du contrat ODCS
+## ODCS Contract Generation
 
-Le contrat généré est conforme à la spécification **[Open Data Contract Standard v3.1.0](https://github.com/bitol-io/open-data-contract-standard)**.
+The generated contract conforms to the **[Open Data Contract Standard v3.1.0](https://github.com/bitol-io/open-data-contract-standard)** specification.
 
-### Paramètres personnalisables (Cell 12)
+### Customisable parameters (Cell 12)
 
 ```python
 odcs_contract = generate_odcs_contract(
-    contract_name    = None,      # défaut : nom du catalog
+    contract_name    = None,      # defaults to catalog name
     contract_version = '1.0.0',
     status           = 'draft',   # 'draft' | 'active' | 'deprecated'
     domain           = '',
@@ -145,10 +145,10 @@ odcs_contract = generate_odcs_contract(
 )
 ```
 
-### Structure du contrat généré
+### Generated contract structure
 
 ```yaml
-# Generated by PythonOLAPClient — <timestamp UTC>
+# Generated by PythonOLAPClient — <UTC timestamp>
 # Standard : Open Data Contract Standard (ODCS) v3.1.0
 # Source   : Power BI Desktop | port <PORT> | catalog <CATALOG_ID>
 
@@ -168,7 +168,7 @@ schema:
     properties:
       - id: col_<id>
         name: <ColumnName>
-        logicalType: string       # mappé depuis le DataType tabulaire
+        logicalType: string       # mapped from tabular DataType
         physicalType: WCHAR
         tags: [data]
         relationships:
@@ -178,11 +178,11 @@ schema:
         name: <MeasureName>
         logicalType: number
         physicalType: measure
-        transformLogic: "<expression DAX>"
+        transformLogic: "<DAX expression>"
         tags: [measure]
 ```
 
-### Mapping des types tabulaires → ODCS
+### Tabular type → ODCS mapping
 
 | DataType | logicalType | physicalType |
 |----------|-------------|--------------|
@@ -195,15 +195,15 @@ schema:
 | 133 | date | DATETIME |
 | 135 | timestamp | TIMESTAMP |
 
-Le fichier de sortie est nommé `<nom_catalog>.odcs.yaml` et placé dans le répertoire courant.
+The output file is named `<catalog_name>.odcs.yaml` and written to the current directory.
 
 ---
 
-## Structure du projet
+## Project Structure
 
 ```
 PowerBI_PythonClient/
-├── PythonOLAPClient.ipynb   # Notebook principal
-├── <catalog>.odcs.yaml      # Contrat ODCS généré (après exécution)
-└── *.dll                    # DLL .NET téléchargées depuis NuGet
+├── PythonOLAPClient.ipynb   # Main notebook
+├── <catalog>.odcs.yaml      # Generated ODCS contract (after execution)
+└── *.dll                    # .NET DLLs downloaded from NuGet
 ```
